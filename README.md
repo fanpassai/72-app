@@ -10,7 +10,7 @@ This folder is the whole app. Vercel serves it as it is. There is no build step.
 |---|---|
 | `index.html`, `app.js`, `styles.css` | The app |
 | `config.js` | The Supabase address and public key |
-| `img/` | Photos, logo, map, app icons |
+| `assets/` | Photos, logo, map, app icons |
 | `api/geo.js` | Works out a visitor's city and country (no GPS) |
 | `sw.js`, `manifest.webmanifest` | Lets people add 72 to their home screen |
 | `supabase/schema.sql` | The database setup. Paste it into Supabase once. |

@@ -14,13 +14,13 @@ function ic(n, size, extra) {
   var st = size ? ' style="width: ' + size + 'px; height: ' + size + 'px' + (extra || '') + '"' : (extra ? ' style="' + extra + '"' : '');
   return '<svg class="s72-icon" viewBox="0 0 24 24" aria-hidden="true"' + st + '>' + ICONS[n] + '</svg>';
 }
-function logo(h, white) { return '<img src="/img/' + (white ? 'logo-white' : 'logo') + '.svg" alt="72" style="display: block; height: ' + h + 'px; width: auto; max-width: none">'; }
+function logo(h, white) { return '<img src="/assets/' + (white ? 'logo-white' : 'logo') + '.svg" alt="72" style="display: block; height: ' + h + 'px; width: auto; max-width: none">'; }
 function num(n) { return Number(n || 0).toLocaleString('en-US'); }
 function people(n) { return Number(n) === 1 ? '1 person' : num(n) + ' people'; }
 function compact(n) { n = Number(n || 0); return n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'K' : num(n); }
 function mnum(m) { return 'Mission ' + String(m.number).padStart(3, '0'); }
 function lines(t) { return String(t || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
-function photo(f) { return /^https?:/.test(f) ? f : '/img/' + f; }
+function photo(f) { return /^https?:/.test(f) ? f : '/assets/' + f; }
 var regionNames = null;
 try { regionNames = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) {}
 function countryName(code) { if (!code) return ''; try { return (regionNames && regionNames.of(code)) || code; } catch (e) { return code; } }
@@ -129,7 +129,7 @@ var CHECK14 = ic('check', 14, '; stroke-width: 2.5');
 var NEXT18 = ic('next', 18);
 var CARD = 'box-shadow: var(--shadow-card), inset 0 0 0 1px var(--line)';
 function mapBox(dark, id) {
-  return '<div class="s72-map" style="margin-top: ' + (dark ? 14 : 30) + 'px"><img src="/img/map-light.svg" alt=""><svg id="' + id + '" viewBox="0 0 700 260" role="img" aria-label="World map. Blue lights mark where people are taking part."></svg></div>';
+  return '<div class="s72-map" style="margin-top: ' + (dark ? 14 : 30) + 'px"><img src="/assets/map-light.svg" alt=""><svg id="' + id + '" viewBox="0 0 700 260" role="img" aria-label="World map. Blue lights mark where people are taking part."></svg></div>';
 }
 function drawPoints(id, pts, dark) {
   var el = document.getElementById(id); if (!el) return;
@@ -142,7 +142,7 @@ function drawPoints(id, pts, dark) {
   }).join('');
 }
 
-var ui = { dtab: 'mission', itab: 'global', sfilter: 'all', cnt: '1', way: null, aud: 'public' };
+var ui = { notifyCtx: null, notifyNext: null, dtab: 'mission', itab: 'global', sfilter: 'all', cnt: '1', way: null, aud: 'public' };
 function storyMission() { return S.live || S.last; }
 function storyJoin() { return S.live ? S.join : S.last_join; }
 
@@ -151,7 +151,7 @@ var SCREENS = {};
 var AFTER = {};
 
 SCREENS.Loading = function () {
-  return '<div class="s72-screen s72-on-black" style="align-items: center; justify-content: center"><img src="/img/lockup-white.svg" alt="72. Go together." style="width: 46%; max-width: 200px"></div>';
+  return '<div class="s72-screen s72-on-black" style="align-items: center; justify-content: center"><img src="/assets/lockup-white.svg" alt="72. Go together." style="width: 46%; max-width: 200px"></div>';
 };
 SCREENS.Offline = function () {
   return '<div class="s72-screen s72-on-black"><main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px">' +
@@ -159,18 +159,19 @@ SCREENS.Offline = function () {
     '<button type="button" class="s72-btn s72-btn--primary" data-act="retry" style="margin-top: 12px">Try again</button></main></div>';
 };
 
+function heroZone(img) {
+  return '<div class="s72-herozone"><div class="s72-72fade"><div class="s72-big72" style="left: -5%; top: 15%; width: 116%"></div></div>' +
+    '<img class="s72-hero__person" src="/assets/' + img + '" alt=""><div class="s72-hero__fade"></div></div>';
+}
 SCREENS.Welcome = function () {
-  return '<div class="s72-screen s72-hero">' +
-    '<div class="s72-big72" style="left: -5%; top: 92px; width: 116%"></div>' +
-    '<img class="s72-hero__person" src="/img/hero-woman.webp" alt="">' +
-    '<div class="s72-hero__fade"></div>' +
-    '<header class="s72-bar"><span>' + logo(26) + '</span><a href="#Notify" class="s72-skip">Skip</a></header>' +
+  return '<div class="s72-screen s72-on-black s72-welcome">' + heroZone('hero-woman.webp') +
+    '<header class="s72-bar"><span>' + logo(24) + '</span><button type="button" class="s72-skip" data-act="skipIntro">Skip</button></header>' +
     '<div style="flex: 1"></div>' +
     '<main class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 26px; color: #fff">' +
     '<h1 class="s72-cond" style="font-size: 50px">One mission.<br>72 hours.<br>Christians<br>everywhere.</h1>' +
-    '<p style="font: 500 17px/24px var(--font-sans); margin-top: 12px">A movement of<br>everyday people.</p>' +
-    '<div class="s72-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>' +
-    '<a class="s72-btn s72-btn--primary" href="#How">Get started ' + ic('arrow', 20) + '</a></main></div>';
+    '<p style="font: 500 17px/24px var(--font-sans); margin-top: 12px">One simple act of good.<br>All of us. At the same time.</p>' +
+    '<div class="s72-dots" aria-hidden="true"><i class="on"></i><i></i></div>' +
+    '<a class="s72-btn s72-btn--primary" href="#How">See how it works ' + ic('arrow', 20) + '</a></main></div>';
 };
 
 SCREENS.How = function () {
@@ -179,56 +180,64 @@ SCREENS.How = function () {
       '<p style="font: 400 15px/21px var(--font-sans); color: var(--ink-muted)"><span style="display: block; font: 800 17px/22px var(--font-sans); letter-spacing: -0.01em; color: var(--ink); margin-bottom: 3px">' + b + '</span>' + t + '</p></div>';
   }
   return '<div class="s72-screen">' +
-    '<header class="s72-bar"><span>' + logo(26) + '</span><a href="#Notify" class="s72-skip">Skip</a></header>' +
-    '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 18px">' +
-    '<span class="s72-eyebrow" style="color: var(--blue-ink)">How it works</span>' +
-    '<h1 class="s72-h" style="margin-top: 10px">Real people.<br>Real good.<br>Together.</h1>' +
+    '<header class="s72-bar"><button type="button" class="s72-iconbtn" data-act="back" aria-label="Back" style="color: var(--ink); margin-left: -10px">' + ic('back') + '</button><button type="button" class="s72-skip" data-act="skipIntro">Skip</button></header>' +
+    '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 14px">' +
+    '<span class="s72-eyebrow" style="color: var(--blue-ink)">How 72 works</span>' +
+    '<h1 class="s72-h" style="margin-top: 10px; font-size: 38px">Three steps.<br>Three days.</h1>' +
     '<div style="display: flex; flex-direction: column; gap: 26px; margin: 36px 0 24px">' +
-    step('megaphone', 'A mission goes live.', 'One simple action, the same for everyone.') +
-    step('clock', 'You have 72 hours.', 'Go on your own, with your two, or as a group.') +
-    step('bars', 'Then we see what happened.', 'Real numbers and real stories from around the world.') +
+    step('megaphone', 'A mission goes live.', 'One simple act of good. The same one for all of us.') +
+    step('clock', 'You have 72 hours.', 'Do it on your own, with a friend, or with your group.') +
+    step('bars', 'We see what we did together.', 'Real numbers and real stories from around the world.') +
     '</div><div style="flex: 1"></div>' +
-    '<div class="s72-dots s72-dots--ink" aria-hidden="true"><i></i><i class="on"></i><i></i></div>' +
-    '<a class="s72-btn s72-btn--primary" href="#Notify">Let’s go ' + ic('arrow', 20) + '</a></main></div>';
+    '<div class="s72-dots s72-dots--ink" aria-hidden="true"><i></i><i class="on"></i></div>' +
+    '<button type="button" class="s72-btn s72-btn--primary" data-act="introDone">' + (S.live ? 'See the mission' : 'Continue') + ' ' + ic('arrow', 20) + '</button></main></div>';
 };
 
 SCREENS.Notify = function () {
-  var me = S.me || {};
+  var me = S.me || {}, ctx = ui.notifyCtx || 'intro', on = pushState() === 'granted';
   function row(icon, k, label) {
-    var on = me[k] !== false;
-    return '<div class="s72-box" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px"><span class="s72-disc">' + ic(icon, 24) + '</span>' +
+    var v = me[k] !== false;
+    return '<div class="s72-box" style="display: flex; align-items: center; gap: 14px; padding: 12px 16px"><span class="s72-disc" style="width: 46px; height: 46px">' + ic(icon, 22) + '</span>' +
       '<span style="flex: 1; font: 700 16px/21px var(--font-sans); letter-spacing: -0.01em">' + label + '</span>' +
-      '<button type="button" class="s72-switch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + label + '" data-act="alert" data-k="' + k + '"></button></div>';
+      '<button type="button" class="s72-switch' + (v ? ' is-on' : '') + '" role="switch" aria-checked="' + v + '" aria-label="' + label + '" data-act="alert" data-k="' + k + '"></button></div>';
   }
-  return '<div class="s72-screen">' + top(backBtn()) +
-    '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 22px">' +
-    '<h1 class="s72-h" style="font-size: 40px">Know the<br>moment<br>it’s live.</h1>' +
-    '<p style="font: 400 17px/25px var(--font-sans); margin-top: 16px; color: var(--ink-muted)">A notification is the surest way to know a new 72 has started.</p>' +
-    '<div style="flex: none; display: flex; flex-direction: column; gap: 10px; margin-top: 22px">' +
+  var copy = {
+    intro: ['Know the moment it’s live.', 'Missions start without warning. A notification is how you’ll know.'],
+    joined: ['Don’t miss<br>how it ends.', 'We’ll tell you when 12 hours are left and when the results land.'],
+    settings: ['Notifications', 'Choose what we tell you about, and how.']
+  }[ctx];
+  return '<div class="s72-screen">' + top(ctx === 'joined' ? '<span></span>' : backBtn()) +
+    '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 16px">' +
+    (ctx === 'joined' ? '<span class="s72-chip s72-chip--blue" style="align-self: flex-start; margin-bottom: 14px">You’re in ' + CHECK14 + '</span>' : '') +
+    '<h1 class="s72-h" style="font-size: ' + (ctx === 'settings' ? 34 : 38) + 'px">' + copy[0] + '</h1>' +
+    '<p style="font: 400 17px/25px var(--font-sans); margin-top: 12px; color: var(--ink-muted)">' + copy[1] + '</p>' +
+    '<div style="flex: none; display: flex; flex-direction: column; gap: 10px; margin-top: 20px">' +
     row('megaphone', 'alert_live', 'When a mission goes live') + row('clock', 'alert_last', 'When 12 hours are left') + row('bars', 'alert_done', 'When the results are in') + '</div>' +
-    '<p class="body-sm" style="margin-top: 16px; color: var(--ink-muted)">That’s all we send. No nagging, no guilt.</p>' +
-    '<label class="s72-label" for="email" style="margin-top: 20px">Or get an email when it starts <span style="font-weight: 400; color: var(--ink-muted)">(optional)</span></label>' +
+    '<p class="body-sm" style="margin-top: 14px; color: var(--ink-muted)">Three messages a mission. Nothing else, ever.</p>' +
+    '<label class="s72-label" for="email" style="margin-top: 18px">Prefer email? <span style="font-weight: 400; color: var(--ink-muted)">We’ll send the same three.</span></label>' +
     '<input id="email" class="s72-input" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="you@example.com" value="' + esc(me.email || '') + '" style="flex: none">' +
     '<div style="flex: 1; min-height: 18px"></div>' +
-    '<button type="button" class="s72-btn s72-btn--primary" data-act="notifyOn" style="position: static">Continue</button>' +
+    '<button type="button" class="s72-btn s72-btn--primary" data-act="' + (on ? 'notifySkip' : 'notifyOn') + '" style="position: static">' + (on ? 'Save' : 'Turn on notifications') + '</button>' +
+    (on ? '' : '<button type="button" class="s72-btn s72-btn--quiet" data-act="notifySkip" style="flex: none; margin-top: 4px">' + (ctx === 'settings' ? 'Save and close' : 'Not now') + '</button>') +
     '</main></div>';
 };
 
 SCREENS.Main = function () {
-  var l = S.last, st = S.last_stats || {};
+  var l = S.last, st = S.last_stats || {}, me = S.me || {};
+  var reachable = pushState() === 'granted' || !!me.email;
   var head = l
     ? '<span class="s72-eyebrow" style="color: #fff; opacity: 1">' + mnum(l) + ' · ' + esc(l.name) + '</span><h1 class="s72-cond" style="font-size: 54px; margin-top: 8px">Mission<br>complete.</h1><p style="font: 500 17px/24px var(--font-sans); margin-top: 10px">' + people(st.going) + ' took part.</p>' +
       '<a class="s72-btn s72-btn--primary" href="#Results" style="flex: none; margin-top: 18px; position: static">See what happened ' + ic('arrow', 20) + '</a>'
-    : '<h1 class="s72-cond" style="font-size: 54px">The first 72<br>is coming.</h1><p style="font: 500 17px/24px var(--font-sans); margin-top: 10px">One mission. 72 hours. Christians everywhere.</p>';
+    : '<span class="s72-eyebrow" style="color: #fff; opacity: 1">Mission 001</span><h1 class="s72-cond" style="font-size: 54px; margin-top: 8px">The first 72<br>is coming.</h1><p style="font: 500 17px/24px var(--font-sans); margin-top: 10px">One simple act of good. All of us. At the same time.</p>';
+  var next = '<span class="s72-eyebrow" style="color: var(--blue-ink); opacity: 1">Next 72</span><span style="font: 900 24px/28px var(--font-sans); letter-spacing: -0.03em">Coming soon.</span>' +
+    '<span class="body-sm" style="color: var(--ink-muted); margin-top: 2px">' + (reachable ? 'We’ll tell you the moment it starts.' : 'Missions start without warning. Tap to get the alert.') + '</span>';
   return '<div class="s72-screen s72-on-black">' +
-    '<img class="s72-photo" src="/img/' + (l ? 'group' : 'lookup') + '.jpg" alt="" style="object-position: 50% 20%">' +
+    '<img class="s72-photo" src="/assets/' + (l ? 'group' : 'lookup') + '.jpg" alt="" style="object-position: 50% 20%">' +
     '<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(12,12,12,0.5) 0%, rgba(12,12,12,0.1) 24%, rgba(12,12,12,0.55) 48%, rgba(12,12,12,0.94) 70%, #0c0c0c 86%)"></div>' +
-    '<header class="s72-bar" style="color: #fff"><span>' + logo(26, true) + '</span><a class="s72-iconbtn" href="#My72" aria-label="Notifications and settings" style="color: #fff; margin-right: -10px">' + ic('bell') + '</a></header>' +
+    '<header class="s72-bar" style="color: #fff"><span>' + logo(24, true) + '</span><span></span></header>' +
     '<div style="flex: 1"></div>' +
     '<main class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 18px">' + head +
-    '<div style="flex: none; display: flex; flex-direction: column; gap: 3px; margin-top: 16px; padding: 16px 18px; border-radius: 20px; background: #fff; color: var(--ink)">' +
-    '<span class="s72-eyebrow" style="color: var(--blue-ink); opacity: 1">Next 72</span><span style="font: 900 24px/28px var(--font-sans); letter-spacing: -0.03em">Coming soon.</span>' +
-    '<span class="body-sm" style="color: var(--ink-muted); margin-top: 2px">' + esc((l && l.between_line) || 'Turn on notifications so you don’t miss it.') + '</span></div>' +
+    (reachable ? '<div class="s72-nextcard">' + next + '</div>' : '<button type="button" class="s72-nextcard" data-act="openNotify" data-ctx="intro" data-next="Home">' + next + '<span class="s72-nextcard__go">' + ic('bell', 22) + '</span></button>') +
     '</main>' + tabbar('Home') + '</div>';
 };
 
@@ -238,14 +247,15 @@ SCREENS.Reveal = function () {
   return '<div class="s72-screen s72-on-black s72-reveal">' +
     '<img class="s72-photo" src="' + esc(photo(m.photo_reveal)) + '" alt="">' +
     '<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(12,12,12,0.5) 0%, rgba(12,12,12,0.05) 22%, rgba(12,12,12,0.3) 40%, rgba(12,12,12,0.9) 62%, #0c0c0c 80%)"></div>' +
-    '<header class="s72-bar" style="color: #fff"><span>' + logo(26, true) + '</span><span style="font: 700 12px/16px var(--font-sans); letter-spacing: 0.16em; text-transform: uppercase">' + mnum(m) + '</span></header>' +
+    '<header class="s72-bar" style="color: #fff"><span>' + logo(24, true) + '</span><span class="s72-livetag"><i></i>Live now</span></header>' +
     '<div style="flex: 1"></div>' +
-    '<main class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 22px">' +
-    '<h1 class="s72-cond" style="font-size: 58px">' + esc(m.name).split(' ').join('<br>') + '</h1>' +
+    '<main class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 20px">' +
+    '<span class="s72-eyebrow" style="color: #fff; opacity: 1">' + mnum(m) + '</span>' +
+    '<h1 class="s72-cond" style="font-size: 58px; margin-top: 6px">' + esc(m.name).split(' ').join('<br>') + '</h1>' +
     '<p style="font: 400 17px/25px var(--font-sans); margin-top: 12px">' + esc(m.action) + '</p>' +
-    '<div style="margin-top: 18px">' + countdown() + '</div>' +
-    (S.join ? '<a class="s72-btn s72-btn--primary" href="#Mission" style="margin-top: 12px; position: static">Continue</a>' : '<a class="s72-btn s72-btn--primary" href="#HowGo" style="margin-top: 12px; position: static">I’m in</a>') +
-    '<div style="display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-left: 4px"><span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.16); display: grid; place-items: center">' + ic('pin', 16) + '</span><p class="body-sm">' + going + '</p></div>' +
+    '<div style="margin-top: 16px">' + countdown() + '</div>' +
+    '<a class="s72-btn s72-btn--primary" href="#HowGo" style="margin-top: 12px; position: static">I’m in</a>' +
+    '<p class="body-sm" style="margin-top: 12px; text-align: center; opacity: 0.85">' + going + '</p>' +
     '</main></div>';
 };
 
@@ -259,15 +269,16 @@ SCREENS.HowGo = function () {
   }
   return '<div class="s72-screen">' +
     '<div style="position: absolute; left: 0; right: 0; top: 84px; height: 232px; overflow: hidden"><div class="s72-big72" style="left: 0; top: 0; width: 116%"></div></div>' +
-    top(backBtn(), '<span>' + logo(26) + '</span>', '', ' style="position: relative"') +
+    top(backBtn(), '<span>' + logo(24) + '</span>', '', ' style="position: relative"') +
     '<main class="s72-pad" style="position: relative; flex: 1; display: flex; flex-direction: column; padding-top: 152px; padding-bottom: 26px">' +
     '<h1 class="s72-h" style="font-size: 40px">How will<br>you go?</h1>' +
-    '<div style="display: flex; flex-direction: column; gap: 12px; margin-top: 30px">' +
-    choice('solo', 'person', 'Go on my own', 'I’ll make this happen myself.') +
-    choice('two', 'two', 'Go with my two', 'I’m bringing someone with me.') +
-    choice('group', 'group', 'Go as a group', 'Family, friends, small group, church, team.') +
+    '<p class="body" style="margin-top: 26px; color: var(--ink-muted)">There’s no wrong way. Pick what fits.</p>' +
+    '<div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px">' +
+    choice('solo', 'person', 'On my own', 'I’ll make this happen myself.') +
+    choice('two', 'two', 'With a friend', 'I’m bringing someone with me.') +
+    choice('group', 'group', 'As a group', 'Family, small group, church or team.') +
     '</div><div style="flex: 1; min-height: 16px"></div>' +
-    '<a class="s72-btn s72-btn--soft" href="#Details">' + ic('idea', 24) + 'Need an idea?</a></main></div>';
+    '<button type="button" class="s72-btn s72-btn--soft" data-act="ideas">' + ic('idea', 24) + 'Need an idea?</button></main></div>';
 };
 
 function inviteText() { return S.live.invite_text || ('I’m doing ' + S.live.name + ' with 72. Come do it with me.'); }
@@ -277,45 +288,48 @@ SCREENS.Invite = function () {
   return '<div class="s72-screen s72-on-black">' +
     '<div style="position: absolute; left: 0; top: 0; right: 0; height: 66%; overflow: hidden"><img class="s72-photo" src="' + esc(photo(m.photo_invite)) + '" alt="" style="object-position: 50% 25%">' +
     '<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(12,12,12,0.4) 0%, rgba(12,12,12,0) 26%, rgba(12,12,12,0.55) 58%, #0c0c0c 96%)"></div></div>' +
-    '<header class="s72-top" style="position: relative"><button type="button" class="s72-iconbtn" data-act="back" aria-label="Back" style="color: #fff">' + ic('back') + '</button><span></span><span></span></header>' +
+    '<header class="s72-top" style="position: relative"><a class="s72-iconbtn" href="#Home" aria-label="Close" style="color: #fff">' + ic('close') + '</a><span></span><span></span></header>' +
     '<main style="position: relative; flex: 1; display: flex; flex-direction: column; padding: 0 12px 14px">' +
     '<div style="flex: 1; min-height: 12px"></div>' +
-    '<h1 class="s72-h" style="font-size: 36px; padding: 0 12px">Invite<br>someone<br>to go with you.</h1>' +
-    '<p style="font: 400 17px/25px var(--font-sans); margin-top: 12px; padding: 0 12px">This is better together. Share this mission with a friend.</p>' +
+    '<h1 class="s72-h" style="font-size: 36px; padding: 0 12px">Bring someone<br>with you.</h1>' +
+    '<p style="font: 400 17px/25px var(--font-sans); margin-top: 10px; padding: 0 12px">Good is better together. Send the invite and go as one.</p>' +
     '<div class="s72-sheet">' +
-    '<a class="s72-sheetrow" href="sms:?&body=' + full + '" data-then="Mission">' + inner('message', '#34C759', 'Messages', 1) + '</a>' +
-    '<a class="s72-sheetrow" href="https://wa.me/?text=' + full + '" target="_blank" rel="noopener" data-then="Mission">' + inner('whatsapp', '#25D366', 'WhatsApp', 1) + '</a>' +
+    '<a class="s72-sheetrow" href="sms:?&body=' + full + '" data-then="Home">' + inner('message', '#34C759', 'Messages', 1) + '</a>' +
+    '<a class="s72-sheetrow" href="https://wa.me/?text=' + full + '" target="_blank" rel="noopener" data-then="Home">' + inner('whatsapp', '#25D366', 'WhatsApp', 1) + '</a>' +
     '<button type="button" class="s72-sheetrow" data-act="inviteCopy">' + inner('link', '#6B6760', 'Copy link', 1) + '</button>' +
     '<button type="button" class="s72-sheetrow" data-act="inviteShare">' + inner('more', '#E9E4DA; color: #111', 'More options', 0) + '</button>' +
-    '<a href="#Mission" style="align-self: center; padding: 12px 10px 6px; font: 600 14px/20px var(--font-sans); color: var(--ink-muted); text-decoration: underline; text-underline-offset: 3px">I’ll invite them later</a>' +
+    '<a href="#Home" style="align-self: center; padding: 12px 10px 6px; font: 600 14px/20px var(--font-sans); color: var(--ink-muted); text-decoration: underline; text-underline-offset: 3px">I’ll do this later</a>' +
     '</div></main></div>';
 };
 
 SCREENS.Mission = function () {
-  var m = S.live, done = S.join && S.join.completed_at;
-  function tile(icon, t, sub, href) { return '<a class="s72-tile" href="' + href + '"><span style="color: var(--blue-ink)">' + ic(icon) + '</span><span class="s72-tile__title">' + t + '</span><span class="s72-tile__sub">' + sub + '</span></a>'; }
+  var m = S.live, st = S.stats || {}, done = S.join && S.join.completed_at, n = Number(st.going), c = Number(st.countries);
+  var live = '<a class="s72-box s72-liverow" href="#Impact"><span class="s72-disc" style="width: 46px; height: 46px">' + ic('impact', 22) + '</span>' +
+    '<span style="flex: 1"><span style="display: block; font: 800 17px/22px var(--font-sans); letter-spacing: -0.015em">' + people(n) + (n === 1 ? ' is going' : ' are going') + '</span>' +
+    '<span style="display: block; font: 400 14px/19px var(--font-sans); color: var(--ink-muted)">' + (c > 1 ? 'in ' + num(c) + ' countries. See the map.' : 'See the map.') + '</span></span>' + ic('next', 20) + '</a>';
+  var actions = done
+    ? '<a class="s72-btn s72-btn--primary" href="#Share" style="position: static">Share your card</a><div class="s72-row2"><a class="s72-btn s72-btn--soft" href="#Story">' + ic('pen', 20) + 'Tell your story</a><a class="s72-btn s72-btn--soft" href="#Invite">' + ic('two', 20) + 'Invite</a></div>'
+    : '<a class="s72-btn s72-btn--primary" href="#Complete" style="position: static">I did it</a><div class="s72-row2"><button type="button" class="s72-btn s72-btn--soft" data-act="ideas">' + ic('idea', 20) + 'Ideas</button><a class="s72-btn s72-btn--soft" href="#Invite">' + ic('two', 20) + 'Invite</a></div>';
   return '<div class="s72-screen s72-missionhome">' +
-    '<div class="s72-on-black" style="position: absolute; left: 0; top: 0; right: 0; height: 430px; overflow: hidden">' +
+    '<section class="s72-homehero">' +
     '<img class="s72-photo" src="' + esc(photo(m.photo_home)) + '" alt="">' +
-    '<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(12,12,12,0.6) 0%, rgba(12,12,12,0.45) 50%, rgba(12,12,12,0.7) 100%)"></div></div>' +
-    '<header class="s72-bar" style="color: #fff"><span>' + logo(26, true) + '</span><a class="s72-iconbtn" href="#Share" aria-label="Share the mission" style="color: #fff; margin-right: -10px">' + ic('share') + '</a></header>' +
-    '<div style="position: relative; flex: none; display: flex; flex-direction: column; align-items: center; padding: 10px 20px 0; color: #fff">' +
-    '<span class="s72-cond" style="font-size: 38px; text-align: center">' + esc(m.name) + '</span>' +
-    '<div style="margin-top: 12px">' + countdown() + '</div>' +
-    '<span class="s72-chip s72-chip--blue" style="margin-top: 14px">' + (done ? 'You did it ' : 'You’re in ') + CHECK14 + '</span></div>' +
-    '<main class="s72-pad" style="position: relative; flex: 1; display: flex; flex-direction: column; padding-top: 26px; padding-bottom: 16px">' +
-    '<div style="flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">' +
-    tile('mission', 'Mission', 'What you’re doing', '#Details') + tile('impact', 'Impact', 'Live worldwide', '#Impact') +
-    tile('doc', 'Stories', 'Real people. Real stories.', '#Stories') + tile('person', 'My 72', 'Your participation', '#My72') +
-    '</div><div style="flex: 1; min-height: 16px"></div>' +
-    (done ? '<a class="s72-btn s72-btn--primary" href="#Share">Share your card</a>' : '<a class="s72-btn s72-btn--primary" href="#Complete">I did it</a>') +
+    '<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(12,12,12,0.5) 0%, rgba(12,12,12,0.12) 26%, rgba(12,12,12,0.45) 50%, rgba(12,12,12,0.92) 82%, #0c0c0c 100%)"></div>' +
+    '<header class="s72-bar" style="color: #fff"><span>' + logo(24, true) + '</span><span class="s72-chip s72-chip--blue">' + (done ? 'You did it ' : 'You’re in ') + CHECK14 + '</span></header>' +
+    '<div style="flex: 1; min-height: 8px"></div>' +
+    '<div class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 18px">' +
+    '<span class="s72-eyebrow" style="color: #fff; opacity: 1">' + mnum(m) + '</span>' +
+    '<h1 class="s72-cond" style="font-size: 46px; margin-top: 6px">' + esc(m.name) + '</h1>' +
+    '<p style="font: 400 16px/23px var(--font-sans); margin-top: 8px">' + esc(m.action) + '</p>' +
+    '<div style="margin-top: 14px">' + countdown() + '</div></div></section>' +
+    '<main class="s72-pad" style="flex: none; display: flex; flex-direction: column; gap: 10px; padding-top: 14px; padding-bottom: 14px">' +
+    live + actions +
     '</main>' + tabbar('Home') + '</div>';
 };
 
 SCREENS.Details = function () {
   var m = S.live, t = ui.dtab;
   var verse = m.scripture ? '<blockquote class="s72-verse"><p>' + esc(m.scripture) + '</p><cite>' + esc(m.scripture_ref) + '</cite></blockquote>' : '';
-  var pMission = '<img src="/img/quiet.jpg" alt="" style="flex: none; display: block; width: 100%; height: 150px; object-fit: cover; object-position: 50% 30%; border-radius: 18px; margin-bottom: 20px"><h2 class="heading">The mission</h2><p class="body" style="margin-top: 6px">' + esc(m.action) + '</p>' + verse +
+  var pMission = '<img src="/assets/quiet.jpg" alt="" style="flex: none; display: block; width: 100%; height: 150px; object-fit: cover; object-position: 50% 30%; border-radius: 18px; margin-bottom: 20px"><h2 class="heading">The mission</h2><p class="body" style="margin-top: 6px">' + esc(m.action) + '</p>' + verse +
     (lines(m.could_be).length ? '<h2 class="heading" style="margin-top: 20px">This could be:</h2><ul class="body" style="margin: 8px 0 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 4px">' + lines(m.could_be).map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>' : '') +
     (m.bar_title ? '<div style="flex: none; display: flex; gap: 12px; align-items: flex-start; margin-top: 20px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sunk)"><span style="flex: none; color: var(--blue-ink)">' + ic('idea') + '</span><p class="body-sm"><span style="font-weight: 700">' + esc(m.bar_title) + '</span> ' + esc(m.bar_body) + '</p></div>' : '');
   var pIdeas = '<h2 class="heading">' + esc(m.ideas_title) + '</h2><div class="s72-card" style="flex: none; margin-top: 12px; padding: 4px 16px; ' + CARD + '">' +
@@ -332,8 +346,7 @@ SCREENS.Details = function () {
 
 SCREENS.Impact = function () {
   var m = S.live || S.last;
-  var head = '<header class="s72-top"><a class="s72-iconbtn" href="#My72" aria-label="Menu" style="color: var(--ink)">' + ic('menu') + '</a><span>' + logo(26) + '</span>' +
-    (S.live && S.join ? '<a class="s72-iconbtn" href="#Share" aria-label="Share" style="color: var(--ink)">' + ic('share') + '</a>' : '<span></span>') + '</header>';
+  var head = '<header class="s72-bar"><span>' + logo(24) + '</span><span class="s72-pagetag">Impact</span></header>';
   if (!m) {
     return '<div class="s72-screen">' + head +
       '<div class="s72-pad" style="flex: 1; text-align: center; padding-top: 80px"><p class="s72-h" style="font-size: 32px">Nothing live yet.</p><p class="body" style="margin-top: 10px; color: var(--ink-muted)">When a mission starts, you’ll watch it spread here.</p></div>' + tabbar('Impact') + '</div>';
@@ -370,7 +383,7 @@ function paintImpact() {
     var rows = row('impact', 'Worldwide', d.going, 'country');
     if (d.place && d.place.country) rows += row('pin', countryName(d.place.country), d.my_country, 'city');
     if (d.place && d.place.city) rows += row('pin', d.place.city, d.my_city, 'city');
-    html = '<div class="s72-map" style="flex: none"><img src="/img/map-light.svg" alt=""><svg id="i-map" viewBox="0 0 700 260" role="img" aria-label="World map. Orange lights mark where people are taking part."></svg></div>' +
+    html = '<div class="s72-map" style="flex: none"><img src="/assets/map-light.svg" alt=""><svg id="i-map" viewBox="0 0 700 260" role="img" aria-label="World map. Orange lights mark where people are taking part."></svg></div>' +
       '<div class="s72-box s72-statrow" style="flex: none; padding: 16px 4px">' + stat(num(d.countries), 'Countries') + stat(num(d.cities), 'Cities') + stat(compact(d.going), 'People') + '</div>' +
       '<div class="s72-box" style="flex: none; padding: 2px 16px">' + rows + '</div>';
   } else {
@@ -393,15 +406,15 @@ AFTER.Impact = function () {
 };
 
 SCREENS.Stories = function () {
-  var m = storyMission();
+  var m = storyMission(), can = m && storyJoin();
   function pill(v, l) { return '<button type="button" class="s72-pill' + (ui.sfilter === v ? ' is-active' : '') + '" data-act="sfilter" data-v="' + v + '" aria-pressed="' + (ui.sfilter === v) + '">' + l + '</button>'; }
-  var body = !m ? '<div class="s72-empty">Stories show up here once a mission is live.</div>'
+  var body = !m ? '<div class="s72-empty">Stories appear here once a mission is live.</div>'
     : '<div style="flex: none; display: flex; gap: 8px; margin: 4px 0 6px">' + pill('all', 'All') + pill('mine', 'My country') + '</div><div id="s-list" style="display: flex; flex-direction: column; gap: 12px"><div class="s72-empty">Loading…</div></div>' +
-      (storyJoin() ? '<a class="s72-btn s72-btn--done" href="#Story" style="flex: none; margin-top: 4px">' + ic('pen', 20) + 'Tell your story</a>' : '');
+      (can ? '<a class="s72-btn s72-btn--done" href="#Story" style="flex: none; margin-top: 4px">' + ic('pen', 20) + 'Tell your story</a>' : '');
   return '<div class="s72-screen">' +
-    '<header class="s72-bar"><span>' + logo(26) + '</span>' + (m && storyJoin() ? '<a class="s72-iconbtn" href="#Story" aria-label="Write your story" style="color: var(--ink); margin-right: -10px">' + ic('doc') + '</a>' : '<span></span>') + '</header>' +
+    '<header class="s72-bar"><span>' + logo(24) + '</span><span class="s72-pagetag">Stories</span></header>' +
     '<main style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 14px 20px 24px">' +
-    '<h1 class="s72-h" style="font-size: 36px">' + (m ? 'Stories from<br>' + mnum(m) : 'Stories') + '</h1>' + body + '</main>' + tabbar('Stories') + '</div>';
+    '<h1 class="s72-h" style="font-size: 36px">' + (m ? 'Stories from<br>' + esc(m.name) : 'Stories') + '</h1>' + body + '</main>' + tabbar('Stories') + '</div>';
 };
 function storyCard(s) {
   var place = [s.city, countryName(s.country)].filter(Boolean).join(', ');
@@ -427,18 +440,18 @@ SCREENS.Story = function () {
   function radio(v, l, h) { return '<button type="button" class="s72-radio' + (ui.aud === v ? ' is-selected' : '') + '" data-act="aud" data-v="' + v + '" aria-pressed="' + (ui.aud === v) + '"><span class="s72-radio__dot"></span><span>' + l + ' <span class="s72-radio__hint">' + h + '</span></span></button>'; }
   return '<div class="s72-screen">' + top(backBtn('close'), '') +
     '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 4px">' +
-    '<h1 class="s72-mission-title" style="font-size: 28px">Share your story</h1>' +
-    '<p class="body" style="margin-top: 6px; color: var(--ink-muted)">Your story can encourage someone else to go.</p>' +
+    '<h1 class="s72-h" style="font-size: 36px">Tell your story.</h1>' +
+    '<p class="body" style="margin-top: 10px; color: var(--ink-muted)">A few honest lines. It might be the reason someone else goes.</p>' +
     '<label class="s72-label" for="story" style="margin-top: 20px">What happened?</label>' +
-    '<textarea id="story" class="s72-field" maxlength="500" placeholder="Tell us what happened…" style="flex: none; min-height: 132px"></textarea>' +
+    '<textarea id="story" class="s72-field" maxlength="500" placeholder="Who did you go to? What surprised you?" style="flex: none; min-height: 132px"></textarea>' +
     '<span class="body-sm" style="align-self: flex-end; color: var(--ink-muted); margin-top: 4px"><span id="story-count">0</span>/500</span>' +
     '<label class="s72-label" for="fname" style="margin-top: 8px">Your first name <span style="font-weight: 400; color: var(--ink-muted)">(optional)</span></label>' +
     '<input id="fname" class="s72-input" type="text" maxlength="40" autocomplete="given-name" value="' + esc(LS.get('name') || '') + '" style="flex: none">' +
-    '<span class="s72-label" style="margin-top: 16px; margin-bottom: 2px">Who can see this?</span>' +
-    '<div style="flex: none; display: flex; flex-direction: column">' + radio('public', 'Public', 'First name and city shown') + radio('anon', 'Anonymous', 'Only your country shown') + '</div>' +
+    '<span class="s72-label" style="margin-top: 16px; margin-bottom: 2px">How should it appear?</span>' +
+    '<div style="flex: none; display: flex; flex-direction: column">' + radio('public', 'With my name', 'First name and city') + radio('anon', 'Anonymous', 'Country only') + '</div>' +
     '<div style="flex: 1; min-height: 16px"></div>' +
-    '<button type="button" class="s72-btn s72-btn--primary" data-act="storySend">Share story</button>' +
-    '<p class="body-sm" style="margin-top: 12px; text-align: center; color: var(--ink-muted)">Please don’t identify someone without their permission. Stories are reviewed before they appear.</p>' +
+    '<button type="button" class="s72-btn s72-btn--primary" data-act="storySend">Send my story</button>' +
+    '<p class="body-sm" style="margin-top: 12px; text-align: center; color: var(--ink-muted)">A person reads every story before it appears. Please don’t name anyone without asking them.</p>' +
     '</main></div>';
 };
 
@@ -451,7 +464,7 @@ SCREENS.Complete = function () {
     '<main style="flex: 1; display: flex; flex-direction: column; padding-bottom: max(18px, env(safe-area-inset-bottom))">' +
     '<span class="s72-eyebrow" style="display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink)">Mission complete ' + CHECK14 + '</span>' +
     '<div style="flex: none; display: flex; align-items: flex-end; margin-top: 10px"><h1 class="s72-h" style="flex: 1; font-size: 38px; padding: 0 0 14px 20px">' + esc(m.complete_title) + '</h1><span style="flex: none; width: 52px; height: 60px; background: var(--blue)"></span></div>' +
-    '<img src="/img/together.jpg" alt="" style="flex: none; display: block; width: 100%; height: 132px; object-fit: cover; object-position: 50% 28%">' +
+    '<img src="/assets/together.jpg" alt="" style="flex: none; display: block; width: 100%; height: 132px; object-fit: cover; object-position: 50% 28%">' +
     '<div class="s72-pad" style="flex: 1; display: flex; flex-direction: column">' +
     '<h2 class="heading" style="margin-top: 18px">' + esc(m.count_question) + '</h2>' +
     '<div style="flex: none; display: flex; gap: 10px; margin-top: 12px">' + nums + '</div>' +
@@ -459,27 +472,22 @@ SCREENS.Complete = function () {
     '<div style="flex: none; display: flex; flex-direction: column; margin-top: 2px">' + wrows + '</div>' +
     '<div style="flex: 1; min-height: 12px"></div>' +
     '<button type="button" class="s72-btn s72-btn--primary" data-act="finish" data-next="Share" style="flex: none">Finish</button>' +
-    '<button type="button" class="s72-btn s72-btn--quiet" data-act="finish" data-next="Story" style="flex: none; margin-top: 2px">Want to tell us what happened?</button>' +
+    '<button type="button" class="s72-btn s72-btn--quiet" data-act="finish" data-next="Story" style="flex: none; margin-top: 2px">Finish and tell my story</button>' +
     '</div></main></div>';
 };
 
 function hoursLeft() { return Math.max(0, Math.ceil((new Date(S.live.ends_at).getTime() - now()) / 3600000)); }
 function shareLine() { var n = Number((S.stats || {}).going) || 1; return people(n) + (n === 1 ? ' is ' : ' are ') + S.live.share_phrase + '.'; }
 SCREENS.Share = function () {
-  var m = S.live, h = hoursLeft();
-  function act(icon, label, a) { return '<button type="button" class="s72-target" data-act="' + a + '">' + ic(icon) + label + '</button>'; }
-  return '<div class="s72-screen s72-hero s72-poster">' +
-    '<div class="s72-big72" style="left: -4%; top: 64px; width: 112%"></div>' +
-    '<img class="s72-hero__person" src="/img/hero-man.webp" alt="">' +
-    '<div class="s72-hero__fade"></div>' +
-    top('<a class="s72-iconbtn" href="#Home" aria-label="Close" style="color: var(--ink)">' + ic('close') + '</a>', '', '', ' style="position: relative"') +
-    '<div style="flex: 1"></div>' +
-    '<main class="s72-pad" style="position: relative; flex: none; display: flex; flex-direction: column; padding-bottom: 20px; color: #fff">' +
-    '<span class="s72-cond" style="font-size: 54px">' + esc(m.name) + '</span>' +
-    '<p style="font: 500 18px/26px var(--font-sans); margin-top: 8px">' + esc(shareLine()) + '</p>' +
-    '<p class="s72-cond" style="font-size: 32px; color: var(--blue); margin-top: 8px">' + (S.join ? 'I’m one of them.' : 'Come with us.') + '</p>' +
-    '<span class="s72-eyebrow" style="margin-top: 10px; color: #fff; opacity: 0.85">' + h + (h === 1 ? ' hour left' : ' hours left') + '</span>' +
-    '<div style="flex: none; display: flex; justify-content: space-around; margin-top: 22px">' + act('share', 'Share', 'cardShare') + act('save', 'Save', 'cardSave') + act('link', 'Copy link', 'cardCopy') + '</div>' +
+  return '<div class="s72-screen s72-on-black">' +
+    top('<a class="s72-iconbtn" href="#Home" aria-label="Close" style="color: #fff">' + ic('close') + '</a>', '<span>' + logo(22, true) + '</span>', '') +
+    '<main class="s72-pad" style="flex: 1; display: flex; flex-direction: column; padding-top: 6px; padding-bottom: 14px">' +
+    '<h1 class="s72-h" style="font-size: 30px; text-align: center">Your card is ready.</h1>' +
+    '<p class="body-sm" style="text-align: center; margin-top: 8px; opacity: 0.8">Post it or send it. It’s how the next person hears about this.</p>' +
+    '<div class="s72-cardbox" id="card-box"><span class="body-sm" style="opacity: 0.6">Making your card…</span></div>' +
+    '<button type="button" class="s72-btn s72-btn--primary" data-act="cardShare" style="flex: none; position: static">' + ic('share', 20) + 'Share</button>' +
+    '<div class="s72-row2" style="margin-top: 10px"><button type="button" class="s72-btn s72-btn--ghost" data-act="cardSave">' + ic('save', 20) + 'Save image</button><button type="button" class="s72-btn s72-btn--ghost" data-act="cardCopy">' + ic('link', 20) + 'Copy link</button></div>' +
+    '<a class="s72-btn s72-btn--quiet" href="#Home" style="flex: none; color: #fff; margin-top: 2px">Done</a>' +
     '</main></div>';
 };
 var cardFile = null;
@@ -487,7 +495,7 @@ function loadImg(src) { return new Promise(function (res, rej) { var i = new Ima
 function makeCard() {
   var m = S.live, W = 1080, H = 1350;
   var fonts = document.fonts ? Promise.all([document.fonts.load('120px Anton'), document.fonts.load('500 46px Inter'), document.fonts.load('700 28px Inter')]).catch(function () {}) : Promise.resolve();
-  return Promise.all([loadImg('/img/hero-man.webp'), loadImg('/img/logo-mask.svg'), fonts]).then(function (r) {
+  return Promise.all([loadImg('/assets/hero-man.webp'), loadImg('/assets/logo-mask.svg'), fonts]).then(function (r) {
     var man = r[0], lg = r[1], cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var x = cv.getContext('2d');
     x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
@@ -515,7 +523,13 @@ function makeCard() {
     return cardFile;
   });
 }
-AFTER.Share = function () { cardFile = null; makeCard().catch(function () {}); };
+AFTER.Share = function () {
+  cardFile = null;
+  makeCard().then(function (f) {
+    var box = document.getElementById('card-box'); if (!box || !f) return;
+    box.innerHTML = '<img src="' + URL.createObjectURL(f) + '" alt="Your share card: ' + esc(S.live.name) + '. ' + esc(shareLine()) + ' I’m one of them.">';
+  }).catch(function () { var box = document.getElementById('card-box'); if (box) box.innerHTML = '<span class="body-sm" style="opacity: 0.7">Couldn’t draw the card. You can still share the link.</span>'; });
+};
 function shareMsg() { return shareLine() + ' ' + (S.join ? 'I’m one of them. ' : '') + 'Join ' + mnum(S.live) + ': ' + S.live.name + '.'; }
 function copyText(t) {
   if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t);
@@ -533,7 +547,7 @@ SCREENS.Results = function () {
     '<div style="flex: none; align-self: stretch; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 28px">' +
     rstat('impact', num(st.countries), 'Countries') + rstat('doc', num(st.stories), 'Stories shared') + rstat('group', num(st.people), esc(m.total_label)) + '</div>' +
     mapBox(false, 'r-map') +
-    '<img src="/img/sunset.jpg" alt="" style="flex: none; display: block; width: 100%; height: 170px; object-fit: cover; object-position: 50% 62%; border-radius: 20px; margin-top: 22px">' +
+    '<img src="/assets/sunset.jpg" alt="" style="flex: none; display: block; width: 100%; height: 170px; object-fit: cover; object-position: 50% 62%; border-radius: 20px; margin-top: 22px">' +
     '<p class="body" style="margin-top: 26px">' + esc(m.closing_line) + '</p>' +
     '<a class="s72-btn s72-btn--primary" href="#Stories" style="flex: none; margin-top: 24px; position: static">Read the stories ' + ic('arrow', 20) + '</a>' +
     '<div style="flex: 1; min-height: 24px"></div><span class="s72-rule" style="flex: none"></span>' +
@@ -548,32 +562,29 @@ function pushState() { return ('Notification' in window) ? Notification.permissi
 SCREENS.My72 = function () {
   var m = S.live, j = S.join, me = S.me || {};
   function lrow(t, href, val) { return '<a class="s72-row" href="' + href + '"><span class="s72-row__text">' + t + '</span><span class="s72-row__value">' + (val || '') + NEXT18 + '</span></a>'; }
-  var howLabel = { solo: 'On my own', two: 'With my two', group: 'As a group' };
+  function nrow(t, val) { return '<button type="button" class="s72-row" data-act="openNotify" data-ctx="settings" data-next="My72"><span class="s72-row__text">' + t + '</span><span class="s72-row__value">' + val + NEXT18 + '</span></button>'; }
+  var howLabel = { solo: 'On my own', two: 'With a friend', group: 'As a group' };
   var missionCard;
   if (m && j) {
-    missionCard = '<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 8px"><span class="s72-title s72-caps" style="font-size: 20px; line-height: 26px">' + esc(m.name) + '</span>' +
+    missionCard = '<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 8px"><span style="font: 900 20px/26px var(--font-sans); letter-spacing: -0.03em">' + esc(m.name) + '</span>' +
       '<span class="s72-chip s72-chip--in">' + CHECK14 + (j.completed_at ? 'You did it' : 'You’re in') + '</span></div>' +
       lrow('How you’re going', '#HowGo', howLabel[j.how] || '') + lrow('Invite someone', '#Invite') + lrow('Tell your story', '#Story');
   } else if (m) {
-    missionCard = '<div style="padding-bottom: 8px"><span class="s72-title s72-caps" style="font-size: 20px; line-height: 26px">' + esc(m.name) + '</span></div>' + lrow('Join this mission', '#Reveal');
+    missionCard = '<div style="padding-bottom: 8px"><span style="font: 900 20px/26px var(--font-sans); letter-spacing: -0.03em">' + esc(m.name) + '</span></div>' + lrow('See the mission', '#Home');
   } else {
     missionCard = '<p class="body" style="padding-bottom: 12px; color: var(--ink-muted)">No mission is live right now. We’ll tell you the moment one starts.</p>';
   }
-  var alerts = [['alert_live', 'A new mission is live', 'The surest way to know it has started.'], ['alert_last', '12 hours left', 'A gentle reminder. Never guilt.'], ['alert_done', 'The results are in', 'What everyone did, together.']];
-  var arows = alerts.map(function (a) { var on = me[a[0]] !== false; return '<div class="s72-row"><span class="s72-row__text">' + a[1] + '<span class="s72-row__sub">' + a[2] + '</span></span><button type="button" class="s72-switch' + (on ? ' is-on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="' + a[1] + '" data-act="alert" data-k="' + a[0] + '"></button></div>'; }).join('');
   var ps = pushState();
-  var chan = lrow('On this phone', '#Notify', ps === 'granted' ? 'On' : 'Off') + lrow('By email', '#Notify', me.email ? esc(me.email.length > 22 ? me.email.slice(0, 20) + '…' : me.email) : 'Add');
-  return '<div class="s72-screen">' + top() +
-    '<main style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 8px 20px 24px">' +
-    '<h1 class="s72-mission-title" style="font-size: 30px">My 72</h1>' +
-    '<span class="s72-eyebrow" style="margin-top: 18px">This mission</span>' +
-    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 16px 16px 4px; ' + CARD + '">' + missionCard + '</div>' +
-    '<span class="s72-eyebrow" style="margin-top: 22px">Tell me about</span>' +
-    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 4px 16px; ' + CARD + '">' + arows + '</div>' +
-    '<span class="s72-eyebrow" style="margin-top: 22px">How we reach you</span>' +
-    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 4px 16px; ' + CARD + '">' + chan + '</div>' +
+  return '<div class="s72-screen">' +
+    '<header class="s72-bar"><span>' + logo(24) + '</span><span class="s72-pagetag">More</span></header>' +
+    '<main style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 14px 20px 24px">' +
+    '<h1 class="s72-h" style="font-size: 36px">My 72</h1>' +
+    '<span class="s72-eyebrow" style="margin-top: 22px">This mission</span>' +
+    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 16px 16px 4px">' + missionCard + '</div>' +
+    '<span class="s72-eyebrow" style="margin-top: 22px">Notifications</span>' +
+    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 4px 16px">' + nrow('On this phone', ps === 'granted' ? 'On' : 'Off') + nrow('By email', me.email ? esc(me.email.length > 22 ? me.email.slice(0, 20) + '…' : me.email) : 'Add') + '</div>' +
     '<span class="s72-eyebrow" style="margin-top: 22px">About</span>' +
-    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 4px 16px; ' + CARD + '">' + lrow('How 72 works', '#How') + lrow('Privacy', '#Privacy') +
+    '<div class="s72-card" style="flex: none; margin-top: 8px; padding: 4px 16px">' + lrow('How 72 works', '#How') + lrow('Privacy', '#Privacy') +
     (TEST ? '<button type="button" class="s72-row" data-act="leaveTest"><span class="s72-row__text">Test mode is on<span class="s72-row__sub">You’re seeing the test mission, not the real one.</span></span><span class="s72-row__value">Leave</span></button>' : '') +
     '</div></main>' + tabbar('More') + '</div>';
 };
@@ -594,7 +605,7 @@ SCREENS.Privacy = function () {
 
 // ------------------------------------------------------------------ moving between screens
 var NEED_LIVE = ['Reveal', 'HowGo', 'Invite', 'Mission', 'Details', 'Complete', 'Share'];
-var NEED_JOIN = ['Invite', 'Mission', 'Complete'];
+var NEED_JOIN = ['Invite', 'Mission', 'Complete', 'Share'];
 function homeName() { return S.live ? (S.join ? 'Mission' : 'Reveal') : 'Main'; }
 var current = null;
 function route() {
@@ -603,6 +614,7 @@ function route() {
   if (!LS.get('onboarded') && ['Welcome', 'How', 'Notify', 'Privacy'].indexOf(name) < 0) name = 'Welcome';
   if (NEED_LIVE.indexOf(name) >= 0 && !S.live) name = homeName();
   if (NEED_JOIN.indexOf(name) >= 0 && !S.join) name = homeName();
+  if (name === 'Reveal' && S.join) name = 'Mission';
   if (name === 'Results' && !S.last) name = homeName();
   if (name === 'Story' && !(storyMission() && storyJoin())) name = 'Stories';
   show(name);
@@ -637,6 +649,7 @@ document.addEventListener('visibilitychange', function () { if (!document.hidden
 
 // ------------------------------------------------------------------ notifications
 function finishOnboard() { LS.set('onboarded', '1'); }
+function notifyDone() { LS.set('asked', '1'); finishOnboard(); var n = ui.notifyNext || 'Home'; ui.notifyNext = null; ui.notifyCtx = null; go(n, true); }
 function b64ToBytes(b64) { var p = '='.repeat((4 - b64.length % 4) % 4), s = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/')), a = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; }
 function subscribePush() {
   if (!C.vapidPublicKey || !('serviceWorker' in navigator) || !('PushManager' in window) || pushState() !== 'granted') return Promise.resolve(false);
@@ -653,7 +666,7 @@ function saveEmailField() {
 function installSheet() {
   sheet('<h2 class="s72-title">Add 72 to your home screen</h2>' +
     '<p class="body" style="color: var(--ink-muted)">On iPhone, notifications only work once 72 is on your home screen.</p>' +
-    '<ol class="body" style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px"><li>Tap the <b>Share</b> button in Safari.</li><li>Choose <b>Add to Home Screen</b>.</li><li>Open 72 from your home screen, then go to More and turn notifications on.</li></ol>' +
+    '<ol class="body" style="margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px"><li>Tap the <b>Share</b> button in Safari.</li><li>Choose <b>Add to Home Screen</b>.</li><li>Open 72 from your home screen. Go to <b>More</b>, then <b>Notifications</b>.</li></ol>' +
     '<button type="button" class="s72-btn s72-btn--primary" data-act="sheetDone" style="margin-top: 8px">Got it</button>');
 }
 
@@ -668,16 +681,25 @@ var ACT = {
   way: function (el) { ui.way = el.dataset.v; pick(el, 'way', 'is-selected'); },
   aud: function (el) { ui.aud = el.dataset.v; pick(el, 'aud', 'is-selected'); },
   join: function (el) {
-    var how = el.dataset.how; busy(el, true);
+    var how = el.dataset.how, first = !S.join; busy(el, true);
     getGeo().then(function (g) {
       return rpc('join_mission', { p_pid: PID, p_mission: S.live.id, p_how: how, p_country: g.country || null, p_region: g.region || null, p_city: g.city || null, p_lat: g.lat == null ? null : g.lat, p_lon: g.lon == null ? null : g.lon });
-    }).then(refresh).then(function () { impactData = null; go(how === 'solo' ? 'Mission' : 'Invite', true); })
-      .catch(function (e) { busy(el, false); toast(e.message); });
+    }).then(refresh).then(function () {
+      impactData = null;
+      var next = how === 'solo' ? 'Home' : 'Invite';
+      if (!first) { go('My72', true); return; }
+      if (!LS.get('asked') && pushState() !== 'granted') { ui.notifyCtx = 'joined'; ui.notifyNext = next; go('Notify', true); }
+      else go(next, true);
+    }).catch(function (e) { busy(el, false); toast(e.message); });
   },
+  ideas: function () { ui.dtab = 'ideas'; go('Details'); },
+  skipIntro: function () { finishOnboard(); go('Home', true); },
+  introDone: function () { if (S.live) { finishOnboard(); go('Home', true); } else { ui.notifyCtx = 'intro'; ui.notifyNext = 'Home'; go('Notify'); } },
+  openNotify: function (el) { ui.notifyCtx = el.dataset.ctx; ui.notifyNext = el.dataset.next; go('Notify'); },
   inviteShare: function () {
     var data = { text: inviteText(), url: SITE };
-    if (navigator.share) navigator.share(data).then(function () { go('Mission', true); }).catch(function () {});
-    else copyText(inviteText() + ' ' + SITE).then(function () { toast('Invite copied. Paste it anywhere.'); go('Mission', true); }).catch(function () { toast('Couldn’t copy. Try Messages or WhatsApp.'); });
+    if (navigator.share) navigator.share(data).then(function () { go('Home', true); }).catch(function () {});
+    else copyText(inviteText() + ' ' + SITE).then(function () { toast('Invite copied. Paste it anywhere.'); go('Home', true); }).catch(function () { toast('Couldn’t copy. Try Messages or WhatsApp.'); });
   },
   inviteCopy: function () { copyText(inviteText() + ' ' + SITE).then(function () { toast('Invite copied. Paste it anywhere.'); }).catch(function () { toast('Couldn’t copy on this phone.'); }); },
   finish: function (el) {
@@ -690,7 +712,7 @@ var ACT = {
     if (!body) { toast('Write a line or two first.'); return; }
     busy(el, true); LS.set('name', name);
     rpc('add_story', { p_pid: PID, p_mission: storyMission().id, p_body: body, p_name: name || null, p_anonymous: ui.aud === 'anon' })
-      .then(function () { go('Stories', true); toast('Thank you. Your story appears after a quick review.'); })
+      .then(function () { go('Stories', true); toast('Thank you. Your story will appear once it’s been read.'); })
       .catch(function (e) { busy(el, false); toast(e.message); });
   },
   enc: function (el) {
@@ -707,25 +729,30 @@ var ACT = {
   notifyOn: function (el) {
     busy(el, true);
     saveEmailField().then(function () {
-      finishOnboard();
       if (!('Notification' in window)) {
         busy(el, false);
         if (isIOS && !standalone) { installSheet(); return; }
-        if (!S.me.email) toast('This browser can’t show notifications. Add an email in More and we’ll write to you.');
-        go('Home', true); return;
+        toast(S.me.email ? 'This browser can’t show notifications. We’ll email you.' : 'This browser can’t show notifications. Add your email and we’ll write to you.');
+        if (S.me.email) notifyDone();
+        return;
       }
-      if (Notification.permission === 'denied') { go('Home', true); return; }
+      if (Notification.permission === 'denied') {
+        busy(el, false);
+        toast(S.me.email ? 'Notifications are blocked for this site. We’ll email you.' : 'Notifications are blocked for this site in your phone’s settings. Add your email and we’ll write to you.');
+        if (S.me.email) notifyDone();
+        return;
+      }
       return Notification.requestPermission().then(function (perm) {
-        if (perm === 'granted') { LS.set('wantPush', '1'); return subscribePush().then(function () { toast('Notifications are on.'); go('Home', true); }); }
-        go('Home', true);
+        if (perm === 'granted') { LS.set('wantPush', '1'); return subscribePush().then(function () { toast('Notifications are on.'); notifyDone(); }); }
+        notifyDone();
       });
     }).catch(function (e) { busy(el, false); toast(e.message); });
   },
   notifySkip: function (el) {
     busy(el, true);
-    saveEmailField().then(function () { finishOnboard(); go('Home', true); }).catch(function (e) { busy(el, false); toast(e.message); });
+    saveEmailField().then(notifyDone).catch(function (e) { busy(el, false); toast(e.message); });
   },
-  sheetDone: function () { closeSheet(); go('Home', true); },
+  sheetDone: function () { closeSheet(); notifyDone(); },
   cardShare: function () {
     var data = { text: shareMsg(), url: SITE };
     if (cardFile && navigator.canShare && navigator.canShare({ files: [cardFile] })) data.files = [cardFile];
@@ -764,6 +791,7 @@ function boot() {
     if (LS.get('wantPush') === '1' && !S.me.has_push) subscribePush();
   }).catch(function () { show('Offline'); });
 }
+try { if (location.hash) history.replaceState(null, '', location.pathname); } catch (e) {}
 if (TEST) { var tag = document.createElement('span'); tag.className = 's72-testtag'; tag.textContent = 'TEST'; stage.appendChild(tag); }
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('/sw.js').catch(function () {});
