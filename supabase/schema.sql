@@ -27,7 +27,7 @@ create table if not exists missions (
   closing_line  text not null default '',
   between_line  text not null default '',
   photo_reveal  text not null default 'reveal.jpg',
-  photo_home    text not null default 'mission.jpg',
+  photo_home    text not null default 'reveal.jpg',
   photo_invite  text not null default 'friends.jpg',
   photo_share   text not null default 'share.jpg',
   starts_at     timestamptz not null,          -- the moment it goes live. It runs 72 hours.
@@ -209,7 +209,13 @@ language sql stable security definer set search_path = public as $$
     'points', coalesce((select jsonb_agg(x) from (
         select round(lat) as lat, round(lon) as lon, count(*) as n from joins
         where mission_id = p_mission and lat is not null and lon is not null
-        group by round(lat), round(lon) order by count(*) desc limit 400) x), '[]'::jsonb)
+        group by round(lat), round(lon) order by count(*) desc limit 400) x), '[]'::jsonb),
+    'feed', coalesce((select jsonb_agg(x) from (
+        select kind, city, country, at from (
+          select 'joined' as kind, city, country, joined_at as at from joins where mission_id = p_mission
+          union all
+          select 'done', city, country, completed_at from joins where mission_id = p_mission and completed_at is not null) u
+        order by at desc limit 12) x), '[]'::jsonb)
   );
 $$;
 
@@ -334,7 +340,7 @@ values
  'giving one more gift', 'Gifts given',
  'For 72 hours, people everywhere gave to someone who wasn’t expecting it.',
  'Until then, keep giving.',
- 'sunrise.jpg', 'sunrise.jpg', 'friends.jpg', 'dusk.jpg',
+ 'gift.jpg', 'gift.jpg', 'friends.jpg', 'share.jpg',
  '2026-12-22 12:00:00+00', false),
 
 (2, 'The Empty Chair',
@@ -351,7 +357,7 @@ values
  'making room at the table', 'People gathered',
  'For 72 hours, people everywhere made room for someone else.',
  'Until then, keep making room.',
- 'reveal.jpg', 'mission.jpg', 'friends.jpg', 'share.jpg',
+ 'reveal.jpg', 'table-dusk.jpg', 'friends.jpg', 'share.jpg',
  '2027-01-19 12:00:00+00', false),
 
 (3, 'The Unasked Favor',
@@ -368,7 +374,7 @@ values
  'doing the unasked favor', 'People helped',
  'For 72 hours, people everywhere noticed a need and met it.',
  'Until then, keep noticing.',
- 'dusk.jpg', 'dusk.jpg', 'friends.jpg', 'sunrise.jpg',
+ 'favor.jpg', 'favor.jpg', 'friends.jpg', 'share.jpg',
  '2027-02-23 12:00:00+00', false),
 
 -- The test mission. Only people who open the app with ?test=1 can see it.
@@ -386,6 +392,17 @@ values
  'making room at the table', 'People gathered',
  'For 72 hours, people everywhere made room for someone else.',
  'Until then, keep making room.',
- 'reveal.jpg', 'mission.jpg', 'friends.jpg', 'share.jpg',
+ 'reveal.jpg', 'table-dusk.jpg', 'friends.jpg', 'share.jpg',
  now(), true)
 on conflict (number, is_test) do nothing;
+
+-- new photo set (only touches missions still pointing at the first placeholder photos)
+update missions set photo_reveal = 'gift.jpg', photo_home = 'gift.jpg', photo_invite = 'gift-give.jpg', photo_share = 'gift.jpg'
+  where number = 1 and not is_test and photo_reveal = 'sunrise.jpg';
+update missions set photo_reveal = 'favor.jpg', photo_home = 'favor.jpg', photo_invite = 'city-walk.jpg', photo_share = 'city-street.jpg'
+  where number = 3 and not is_test and photo_reveal = 'dusk.jpg';
+update missions set photo_home = 'reveal.jpg' where photo_home = 'mission.jpg';
+
+-- orange photo set
+update missions set photo_invite = 'friends.jpg', photo_share = 'share.jpg' where photo_invite in ('gift-give.jpg', 'city-walk.jpg') or photo_share in ('gift.jpg', 'city-street.jpg');
+update missions set photo_home = 'table-dusk.jpg' where photo_home = 'reveal.jpg' and name = 'The Empty Chair';
